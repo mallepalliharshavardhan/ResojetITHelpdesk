@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manufacturing Helpdesk Pro</title>
+    <link rel="manifest" href="data:application/json;charset=utf-8,{%22name%22:%22Manufacturing%20Helpdesk%22,%22short_name%22:%22Helpdesk%22,%22start_url%22:%22./%22,%22display%22:%22standalone%22,%22background_color%22:%22%23fcfcf9%22,%22theme_color%22:%22%23218090%22}">
+    <meta name="theme-color" content="#218090">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --teal-500: #0d9488;
+            --orange-500: #f97316;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--teal-500));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-content h2 {
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Role Selection */
+        .role-selection {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--background-color), #e0f2fe);
+        }
+
+        .role-selection-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 3rem;
+            background: var(--surface-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .role-selection-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .role-selection-content p {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .role-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Main App */
+        .main-app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .app-header {
+            background: var(--surface-color);
+            border-bottom: 2px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Storage Alert */
+        .storage-alert {
+            background: linear-gradient(45deg, var(--warning-color), var(--orange-500));
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+            font-weight: 500;
+            animation: pulse 2s infinite;
+        }
+
+        .storage-alert.danger {
+            background: linear-gradient(45deg, var(--danger-color), #dc2626);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            background: var(--surface-color);
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .nav-tabs-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .nav-tab:hover {
+            background: var(--background-color);
+            color: var(--primary-color);
+        }
+
+        .nav-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            background: var(--background-color);
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 2rem;
+        }
+
+        /* Notifications */
+        .notification-bar {
+            margin-bottom: 2rem;
+        }
+
+        .notification {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .notification.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .notification.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .notification.info {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface-color);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+        }
+
+        .stat-card.warning::before {
+            background: var(--warning-color);
+        }
+
+        .stat-card.success::before {
+            background: var(--success-color);
+        }
+
+        .stat-card.danger::before {
+            background: var(--danger-color);
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-control:invalid {
+            border-color: var(--danger-color);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn--primary {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .btn--primary:hover:not(:disabled) {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn--secondary {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .btn--secondary:hover:not(:disabled) {
+            background: #475569;
+            border-color: #475569;
+        }
+
+        .btn--success {
+            background: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+
+        .btn--warning {
+            background: var(--warning-color);
+            color: white;
+            border-color: var(--warning-color);
+        }
+
+        .btn--danger {
+            background: var(--danger-color);
+            color: white;
+            border-color: var(--danger-color);
+        }
+
+        .btn--outline {
+            background: transparent;
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn--outline:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn--lg {
+            padding: 1.25rem 2rem;
+            font-size: 1.125rem;
+            border-radius: 12px;
+        }
+
+        .btn--sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        /* Tables */
+        .table-container {
+            background: var(--surface-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color);
+            position: sticky;
+            top: 0;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.03);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge--success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .badge--warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        .badge--danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+
+        .badge--primary {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+
+        /* Storage Meter */
+        .storage-meter {
+            background: var(--background-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .storage-meter-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .storage-meter-bar {
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .storage-meter-fill {
+            height: 100%;
+            background: var(--success-color);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .storage-meter-fill.warning {
+            background: var(--warning-color);
+        }
+
+        .storage-meter-fill.danger {
+            background: var(--danger-color);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-tabs-content {
+                padding: 0 1rem;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .role-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+
+        /* Asset Management Specific */
+        .asset-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .asset-category-card {
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .asset-category-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .asset-category-card.active {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .asset-category-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .asset-category-name {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .asset-category-count {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <h2>Manufacturing Helpdesk Pro</h2>
+            <div class="loading-spinner"></div>
+            <p>Initializing system...</p>
+        </div>
+    </div>
+
+    <!-- Role Selection Screen -->
+    <div id="roleSelection" class="role-selection hidden">
+        <div class="role-selection-content">
+            <h1>Welcome to Manufacturing Helpdesk</h1>
+            <p>Please select your access level to continue</p>
+            <div class="role-buttons">
+                <button class="btn btn--primary btn--lg" onclick="selectRole('user')">
+                    <span>👤</span>
+                    Employee Access
+                </button>
+                <button class="btn btn--secondary btn--lg" onclick="selectRole('admin')">
+                    <span>🔧</span>
+                    Administrator Access
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app hidden">
+        <!-- Storage Alert Banner -->
+        <div id="storageAlert" class="storage-alert hidden">
+            <span id="storageAlertText">Storage capacity warning</span>
+        </div>
+
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="app-title">Manufacturing Helpdesk Pro</h1>
+                    <span id="currentRole" class="role-indicator"></span>
+                </div>
+                <div class="header-controls">
+                    <div class="storage-meter">
+                        <div class="storage-meter-label">
+                            <span>Storage Usage</span>
+                            <span id="storagePercentage">0%</span>
+                        </div>
+                        <div class="storage-meter-bar">
+                            <div id="storageFill" class="storage-meter-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn--outline" onclick="exportData()">
+                        📥 Export Data
+                    </button>
+                    <button class="btn btn--outline" onclick="changeRole()">
+                        🔄 Switch Role
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <div class="nav-tabs-content">
+                <button class="nav-tab active" onclick="switchTab('dashboard')">
+                    📊 Dashboard
+                </button>
+                <button class="nav-tab" onclick="switchTab('tickets')">
+                    🎫 My Tickets
+                </button>
+                <button class="nav-tab" onclick="switchTab('submit')">
+                    ➕ Submit Ticket
+                </button>
+                <button class="nav-tab" onclick="switchTab('analytics')">
+                    📈 Analytics
+                </button>
+                <button id="assetsTab" class="nav-tab hidden" onclick="switchTab('assets')">
+                    💻 IT Assets
+                </button>
+                <button id="adminTab" class="nav-tab hidden" onclick="switchTab('admin')">
+                    ⚙️ Admin Panel
+                </button>
+            </div>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="content-area">
+            <!-- Notifications -->
+            <div id="notifications" class="notification-bar"></div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboardContent" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalTickets">0</div>
+                        <div class="stat-label">Total Tickets</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-value" id="openTickets">0</div>
+                        <div class="stat-label">Open Tickets</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value" id="resolvedTickets">0</div>
+                        <div class="stat-label">Resolved Tickets</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-value" id="avgResolutionTime">0</div>
+                        <div class="stat-label">Avg Resolution (mins)</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Activity</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentActivity">
+                            <p class="text-muted">No recent activity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Tickets Tab -->
+            <div id="ticketsContent" class="tab-content">
+                <div class="filters">
+                    <div class="filter-group">
+                        <label class="form-label">Status</label>
+                        <select id="statusFilter" class="form-control" onchange="filterTickets()">
+                            <option value="">All Status</option>
+                            <option value="Open">Open</option>
+                            <option value="In-Progress">In-Progress</option>
+                            <option value="Resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label">Category</label>
+                        <select id="categoryFilter" class="form-control" onchange="filterTickets()">
+                            <option value="">All Categories</option>
+                            <option value="Hardware">Hardware</option>
+                            <option value="Software">Software</option>
+                            <option value="Network">Network</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="form-label">Search</label>
+                        <input type="text" id="searchFilter" class="form-control" placeholder="Search tickets..." oninput="filterTickets()">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Category</th>
+                                <th>Issue</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Est. Resolution</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Submit Ticket Tab -->
+            <div id="submitContent" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Submit New Support Ticket</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="ticketForm" onsubmit="submitTicket(event)">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Your Name *</label>
+                                    <input type="text" name="userName" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Department *</label>
+                                    <select name="department" class="form-control" required>
+                                        <option value="">Select Department</option>
+                                        <option value="Production">Production</option>
+                                        <option value="Quality Control">Quality Control</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="IT Support">IT Support</option>
+                                        <option value="Administration">Administration</option>
+                                        <option value="Warehouse">Warehouse</option>
+                                        <option value="Safety">Safety</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Contact Email</label>
+                                    <input type="email" name="email" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Priority *</label>
+                                    <select name="priority" class="form-control" required>
+                                        <option value="">Select Priority</option>
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Category *</label>
+                                <select name="category" class="form-control" required onchange="updateIssueTypes(this.value)">
+                                    <option value="">Select Category</option>
+                                    <option value="Hardware">Hardware</option>
+                                    <option value="Software">Software</option>
+                                    <option value="Network">Network</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Issue Type *</label>
+                                <select name="issueType" class="form-control" required id="issueTypeSelect">
+                                    <option value="">Select category first</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Description *</label>
+                                <textarea name="description" class="form-control" rows="4" required placeholder="Please describe the issue in detail..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Asset/Machine ID (if applicable)</label>
+                                <input type="text" name="assetId" class="form-control" placeholder="e.g., PROD-LINE-01">
+                            </div>
+
+                            <button type="submit" class="btn btn--primary">
+                                🎫 Submit Ticket
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsContent" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalTicketsAnalytics">0</div>
+                        <div class="stat-label">Total Tickets</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value" id="resolutionRate">0%</div>
+                        <div class="stat-label">Resolution Rate</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-value" id="avgResponseTime">0</div>
+                        <div class="stat-label">Avg Response (mins)</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Issue Categories Distribution</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="categoryChart">
+                            <!-- Category distribution will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Most Common Issues</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="commonIssues">
+                            <!-- Common issues list will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IT Assets Tab (Admin Only) -->
+            <div id="assetsContent" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>IT Asset Management</h3>
+                        <button class="btn btn--primary" onclick="showAddAssetModal()">
+                            ➕ Add Asset
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="asset-categories" id="assetCategories">
+                            <!-- Asset categories will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 id="selectedCategoryTitle">All Assets</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead id="assetTableHeader">
+                                </thead>
+                                <tbody id="assetTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Panel Tab -->
+            <div id="adminContent" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUsers">50</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-value" id="pendingTickets">0</div>
+                        <div class="stat-label">Pending Tickets</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value" id="totalAssets">0</div>
+                        <div class="stat-label">Total Assets</div>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-value" id="expiringAssets">0</div>
+                        <div class="stat-label">Expiring Soon</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>All Support Tickets</h3>
+                        <div>
+                            <button class="btn btn--success" onclick="bulkUpdateStatus('Resolved')">
+                                ✅ Mark All Resolved
+                            </button>
+                            <button class="btn btn--warning" onclick="exportAllTickets()">
+                                📤 Export All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <input type="checkbox" onchange="toggleAllTickets(this)">
+                                        </th>
+                                        <th>ID</th>
+                                        <th>User</th>
+                                        <th>Department</th>
+                                        <th>Category</th>
+                                        <th>Issue</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTicketsTable">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Asset Modal -->
+    <div id="assetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="assetModalTitle">Add New Asset</h3>
+                <button class="modal-close" onclick="closeAssetModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="assetForm" onsubmit="saveAsset(event)">
+                    <div id="assetFormFields">
+                        <!-- Dynamic form fields will be rendered here -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--outline" onclick="closeAssetModal()">Cancel</button>
+                <button class="btn btn--primary" onclick="document.getElementById('assetForm').requestSubmit()">Save Asset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let currentRole = '';
+        let currentTab = 'dashboard';
+        let tickets = [];
+        let assets = {};
+        let storageInfo = { currentUsage: 0, maxCapacity: 100 };
+        let updateInterval = null;
+        let selectedAssetCategory = null;
+
+        // Asset Categories Configuration based on Excel structure
+        const assetCategories = {
+            'desktop-computers': {
+                name: 'Desktop Computers',
+                icon: '🖥️',
+                count: 31,
+                fields: [
+                    { name: 'assetCode', label: 'Asset Code', type: 'text', required: true },
+                    { name: 'yearOfPurchase', label: 'Year of Purchase', type: 'number', required: true },
+                    { name: 'billNo', label: 'Bill No', type: 'text' },
+                    { name: 'computerName', label: 'Computer Name', type: 'text' },
+                    { name: 'username', label: 'Username', type: 'text' },
+                    { name: 'department', label: 'Department', type: 'select', options: ['Production', 'Quality Control', 'Engineering', 'IT Support'] },
+                    { name: 'make', label: 'Make', type: 'text' },
+                    { name: 'modelNo', label: 'Model No', type: 'text' },
+                    { name: 'cpu', label: 'CPU', type: 'text' },
+                    { name: 'ram', label: 'RAM', type: 'text' },
+                    { name: 'storage', label: 'HDD/SSD', type: 'text' },
+                    { name: 'os', label: 'OS', type: 'text' },
+                    { name: 'vendor', label: 'Vendor', type: 'text' }
+                ]
+            },
+            'monitors': {
+                name: 'LCD Monitors',
+                icon: '🖱️',
+                count: 21,
+                fields: [
+                    { name: 'assetCode', label: 'Asset Code', type: 'text', required: true },
+                    { name: 'serialNo', label: 'Serial No', type: 'text' },
+                    { name: 'inches', label: 'Inches', type: 'number' },
+                    { name: 'department', label: 'Department', type: 'select', options: ['Production', 'Quality Control', 'Engineering', 'IT Support'] },
+                    { name: 'user', label: 'User', type: 'text' },
+                    { name: 'location', label: 'Installed Location', type: 'text' }
+                ]
+            },
+            'laptops': {
+                name: 'Laptops',
+                icon: '💻',
+                count: 24,
+                fields: [
+                    { name: 'assetCode', label: 'Asset Code', type: 'text', required: true },
+                    { name: 'userName', label: 'User Name', type: 'text' },
+                    { name: 'hostname', label: 'Hostname', type: 'text' },
+                    { name: 'department', label: 'Department', type: 'select', options: ['Production', 'Quality Control', 'Engineering', 'IT Support'] },
+                    { name: 'make', label: 'Make', type: 'text' },
+                    { name: 'modelNo', label: 'Model No', type: 'text' },
+                    { name: 'cpu', label: 'CPU', type: 'text' },
+                    { name: 'ram', label: 'RAM', type: 'text' },
+                    { name: 'storage', label: 'SSD/HDD', type: 'text' },
+                    { name: 'os', label: 'OS', type: 'text' },
+                    { name: 'warrantyStatus', label: 'Warranty Status', type: 'select', options: ['Active', 'Expired', 'Extended'] },
+                    { name: 'value', label: 'Asset Value', type: 'number' }
+                ]
+            },
+            'printers': {
+                name: 'Printers & Scanners',
+                icon: '🖨️',
+                count: 31,
+                fields: [
+                    { name: 'assetCode', label: 'Asset Code', type: 'text', required: true },
+                    { name: 'assetType', label: 'Asset Type', type: 'select', options: ['Printer', 'Scanner', 'All-in-One'] },
+                    { name: 'department', label: 'Department', type: 'select', options: ['Production', 'Quality Control', 'Engineering', 'IT Support'] },
+                    { name: 'location', label: 'Location', type: 'text' },
+                    { name: 'make', label: 'Make', type: 'text' },
+                    { name: 'modelNo', label: 'Model No', type: 'text' },
+                    { name: 'vendorName', label: 'Vendor Name', type: 'text' }
+                ]
+            },
+            'servers': {
+                name: 'Servers',
+                icon: '🖳',
+                count: 5,
+                fields: [
+                    { name: 'assetCode', label: 'Asset Code', type: 'text', required: true },
+                    { name: 'assetType', label: 'Asset Type', type: 'select', options: ['Physical Server', 'Virtual Server', 'Blade Server'] },
+                    { name: 'make', label: 'Make', type: 'text' },
+                    { name: 'modelNo', label: 'Model No', type: 'text' },
+                    { name: 'mac', label: 'MAC Address', type: 'text' },
+                    { name: 'hostname', label: 'Hostname', type: 'text' },
+                    { name: 'ipAddress', label: 'IP Address', type: 'text' },
+                    { name: 'serverOS', label: 'Server OS', type: 'text' },
+                    { name: 'ram', label: 'RAM', type: 'text' },
+                    { name: 'storage', label: 'HDD/SSD', type: 'text' },
+                    { name: 'processor', label: 'Processor', type: 'text' },
+                    { name: 'location', label: 'Installed Location', type: 'text' },
+                    { name: 'vendor', label: 'Vendor', type: 'text' }
+                ]
+            },
+            'network-devices': {
+                name: 'Network Devices',
+                icon: '🌐',
+                count: 23,
+                fields: [
+                    { name: 'assetCode', label: 'Asset Code', type: 'text', required: true },
+                    { name: 'assetType', label: 'Asset Type', type: 'select', options: ['Firewall', 'Switch', 'Router', 'Access Point'] },
+                    { name: 'make', label: 'Make', type: 'text' },
+                    { name: 'modelNo', label: 'Model No', type: 'text' },
+                    { name: 'location', label: 'Installed Location', type: 'text' },
+                    { name: 'vendor', label: 'Vendor', type: 'text' }
+                ]
+            }
+        };
+
+        // Issue types by category
+        const issueTypes = {
+            Hardware: [
+                'Computer not powering on',
+                'Monitor blank/no display',
+                'Printer not working',
+                'Scanner malfunction',
+                'Keyboard/Mouse issues',
+                'Hard drive failure',
+                'Memory (RAM) issues',
+                'Overheating issues',
+                'Physical damage',
+                'Cable/Connection problems'
+            ],
+            Software: [
+                'Application not starting',
+                'Software crashes/freezes',
+                'License expiry/activation',
+                'Installation problems',
+                'Performance issues',
+                'Data corruption',
+                'Version compatibility',
+                'AutoCAD issues',
+                'Microsoft Office problems',
+                'Custom software bugs'
+            ],
+            Network: [
+                'No internet connection',
+                'Slow network speed',
+                'VPN connection issues',
+                'Email problems',
+                'File sharing issues',
+                'Network drive access',
+                'WiFi connectivity',
+                'Server unreachable',
+                'Port blocking',
+                'Network security issues'
+            ]
+        };
+
+        // Sample data
+        const sampleTickets = [
+            {
+                id: 'TKT-001',
+                user: 'John Smith',
+                department: 'Production',
+                category: 'Hardware',
+                issueType: 'Computer not powering on',
+                description: 'Production workstation won\'t start after power outage',
+                priority: 'High',
+                status: 'Open',
+                dateCreated: new Date('2025-10-04T08:30:00Z'),
+                estimatedResolution: 65, // 45 + 20 minute buffer
+                email: 'john.smith@company.com',
+                assetId: 'PROD-LINE-01'
+            },
+            {
+                id: 'TKT-002',
+                user: 'Sarah Johnson',
+                department: 'Quality Control',
+                category: 'Software',
+                issueType: 'License expiry/activation',
+                description: 'AutoCAD license expired, unable to open CAD files',
+                priority: 'Medium',
+                status: 'In-Progress',
+                dateCreated: new Date('2025-10-04T09:15:00Z'),
+                estimatedResolution: 55, // 35 + 20 minute buffer
+                email: 'sarah.johnson@company.com',
+                assetId: 'ENG-CAD-05'
+            },
+            {
+                id: 'TKT-003',
+                user: 'Mike Wilson',
+                department: 'Engineering',
+                category: 'Network',
+                issueType: 'Slow network speed',
+                description: 'Network very slow in engineering dept, affecting file transfers',
+                priority: 'Low',
+                status: 'Resolved',
+                dateCreated: new Date('2025-10-03T14:20:00Z'),
+                estimatedResolution: 40, // 20 + 20 minute buffer
+                email: 'mike.wilson@company.com',
+                assetId: ''
+            }
+        ];
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show loading screen initially
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('roleSelection').classList.remove('hidden');
+            }, 2000);
+
+            // Load existing data
+            loadData();
+            
+            // Initialize storage monitoring
+            updateStorageInfo();
+            
+            // Start real-time updates
+            startRealTimeUpdates();
+        });
+
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('roleSelection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Show/hide admin tabs
+            if (role === 'admin') {
+                document.getElementById('assetsTab').classList.remove('hidden');
+                document.getElementById('adminTab').classList.remove('hidden');
+                document.getElementById('currentRole').textContent = '(Administrator)';
+            } else {
+                document.getElementById('assetsTab').classList.add('hidden');
+                document.getElementById('adminTab').classList.add('hidden');
+                document.getElementById('currentRole').textContent = '(Employee)';
+            }
+            
+            // Update dashboard
+            updateDashboard();
+            renderTicketsTable();
+            if (role === 'admin') {
+                renderAssetCategories();
+                renderAdminTicketsTable();
+            }
+        }
+
+        function changeRole() {
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('roleSelection').classList.remove('hidden');
+        }
+
+        function switchTab(tabName) {
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Content').classList.add('active');
+            
+            currentTab = tabName;
+            
+            // Update content based on tab
+            switch(tabName) {
+                case 'dashboard':
+                    updateDashboard();
+                    break;
+                case 'tickets':
+                    renderTicketsTable();
+                    break;
+                case 'analytics':
+                    updateAnalytics();
+                    break;
+                case 'assets':
+                    renderAssetCategories();
+                    renderAssetsTable();
+                    break;
+                case 'admin':
+                    renderAdminTicketsTable();
+                    updateAdminStats();
+                    break;
+            }
+        }
+
+        function loadData() {
+            // Load tickets from localStorage or use sample data
+            const savedTickets = localStorage.getItem('helpdesk_tickets');
+            if (savedTickets) {
+                tickets = JSON.parse(savedTickets).map(ticket => ({
+                    ...ticket,
+                    dateCreated: new Date(ticket.dateCreated)
+                }));
+            } else {
+                tickets = sampleTickets;
+                saveData();
+            }
+            
+            // Load assets from localStorage or initialize empty
+            const savedAssets = localStorage.getItem('helpdesk_assets');
+            if (savedAssets) {
+                assets = JSON.parse(savedAssets);
+            } else {
+                // Initialize with sample asset data
+                assets = {
+                    'desktop-computers': [
+                        {
+                            assetCode: 'DT-001',
+                            yearOfPurchase: 2023,
+                            billNo: 'INV-2023-001',
+                            computerName: 'PROD-WS-01',
+                            username: 'john.smith',
+                            department: 'Production',
+                            make: 'Dell',
+                            modelNo: 'OptiPlex 7090',
+                            cpu: 'Intel i7-11700',
+                            ram: '16GB DDR4',
+                            storage: '512GB SSD',
+                            os: 'Windows 10 Pro',
+                            vendor: 'Dell Technologies'
+                        }
+                    ],
+                    'laptops': [
+                        {
+                            assetCode: 'LT-001',
+                            userName: 'sarah.johnson',
+                            hostname: 'ENG-LAP-01',
+                            department: 'Engineering',
+                            make: 'HP',
+                            modelNo: 'EliteBook 850',
+                            cpu: 'Intel i7-11th Gen',
+                            ram: '16GB',
+                            storage: '1TB SSD',
+                            os: 'Windows 10 Pro',
+                            warrantyStatus: 'Active',
+                            value: 85000
+                        }
+                    ]
+                };
+                saveAssets();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('helpdesk_tickets', JSON.stringify(tickets));
+        }
+
+        function saveAssets() {
+            localStorage.setItem('helpdesk_assets', JSON.stringify(assets));
+        }
+
+        function updateStorageInfo() {
+            // Calculate storage usage (simplified)
+            const totalData = JSON.stringify(tickets).length + JSON.stringify(assets).length;
+            const maxStorage = 5 * 1024 * 1024; // 5MB limit for demo
+            
+            storageInfo.currentUsage = Math.min((totalData / maxStorage) * 100, 100);
+            
+            // Update UI
+            const percentage = Math.round(storageInfo.currentUsage);
+            document.getElementById('storagePercentage').textContent = percentage + '%';
+            
+            const fill = document.getElementById('storageFill');
+            fill.style.width = percentage + '%';
+            
+            // Update fill color based on usage
+            fill.classList.remove('warning', 'danger');
+            if (percentage >= 95) {
+                fill.classList.add('danger');
+                showStorageAlert('Storage critical! Export and clean data immediately.', 'danger');
+            } else if (percentage >= 90) {
+                fill.classList.add('danger');
+                showStorageAlert('Storage almost full! Please export data soon.', 'danger');
+            } else if (percentage >= 80) {
+                fill.classList.add('warning');
+                showStorageAlert('Storage getting full. Consider exporting old data.', 'warning');
+            } else {
+                hideStorageAlert();
+            }
+        }
+
+        function showStorageAlert(message, type) {
+            const alert = document.getElementById('storageAlert');
+            const alertText = document.getElementById('storageAlertText');
+            
+            alert.classList.remove('hidden', 'danger');
+            if (type === 'danger') {
+                alert.classList.add('danger');
+            }
+            
+            alertText.textContent = message;
+        }
+
+        function hideStorageAlert() {
+            document.getElementById('storageAlert').classList.add('hidden');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notifications = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            const icon = type === 'warning' ? '⚠️' : type === 'danger' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            notification.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+            
+            notifications.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        function updateDashboard() {
+            const totalCount = tickets.length;
+            const openCount = tickets.filter(t => t.status === 'Open').length;
+            const resolvedCount = tickets.filter(t => t.status === 'Resolved').length;
+            
+            // Calculate average resolution time (with +20 min buffer already included)
+            const resolvedTickets = tickets.filter(t => t.status === 'Resolved');
+            const avgResolution = resolvedTickets.length > 0 
+                ? Math.round(resolvedTickets.reduce((sum, t) => sum + t.estimatedResolution, 0) / resolvedTickets.length)
+                : 0;
+            
+            document.getElementById('totalTickets').textContent = totalCount;
+            document.getElementById('openTickets').textContent = openCount;
+            document.getElementById('resolvedTickets').textContent = resolvedCount;
+            document.getElementById('avgResolutionTime').textContent = avgResolution;
+            
+            // Update recent activity
+            const recentActivity = document.getElementById('recentActivity');
+            const recent = tickets.slice(0, 5).map(ticket => 
+                `<p><strong>${ticket.id}</strong> - ${ticket.user} reported "${ticket.issueType}" (${ticket.status})</p>`
+            ).join('');
+            
+            recentActivity.innerHTML = recent || '<p class="text-muted">No recent activity</p>';
+        }
+
+        function updateIssueTypes(category) {
+            const issueSelect = document.getElementById('issueTypeSelect');
+            issueSelect.innerHTML = '<option value="">Select issue type</option>';
+            
+            if (category && issueTypes[category]) {
+                issueTypes[category].forEach(issue => {
+                    const option = document.createElement('option');
+                    option.value = issue;
+                    option.textContent = issue;
+                    issueSelect.appendChild(option);
+                });
+            }
+        }
+
+        function submitTicket(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const ticketData = Object.fromEntries(formData.entries());
+            
+            // Generate ticket ID
+            const ticketCount = tickets.length + 1;
+            const ticketId = 'TKT-' + String(ticketCount).padStart(3, '0');
+            
+            // Calculate estimated resolution time (base time + 20 min buffer)
+            const baseTimes = { 'Low': 20, 'Medium': 35, 'High': 45, 'Critical': 60 };
+            const baseTime = baseTimes[ticketData.priority] || 30;
+            const estimatedResolution = baseTime + 20; // Always add 20 minutes
+            
+            const newTicket = {
+                id: ticketId,
+                user: ticketData.userName,
+                department: ticketData.department,
+                category: ticketData.category,
+                issueType: ticketData.issueType,
+                description: ticketData.description,
+                priority: ticketData.priority,
+                status: 'Open',
+                dateCreated: new Date(),
+                estimatedResolution: estimatedResolution,
+                email: ticketData.email || '',
+                assetId: ticketData.assetId || ''
+            };
+            
+            tickets.push(newTicket);
+            saveData();
+            updateStorageInfo();
+            
+            showNotification(`Ticket ${ticketId} submitted successfully! Estimated resolution: ${estimatedResolution} minutes`, 'success');
+            
+            // Reset form
+            event.target.reset();
+            
+            // Update dashboard
+            updateDashboard();
+        }
+
+        function renderTicketsTable() {
+            const tbody = document.getElementById('ticketsTableBody');
+            const filteredTickets = filterTicketData();
+            
+            tbody.innerHTML = filteredTickets.map(ticket => `
+                <tr>
+                    <td><strong>${ticket.id}</strong></td>
+                    <td><span class="badge badge--${getBadgeClass(ticket.category)}">${ticket.category}</span></td>
+                    <td>${ticket.issueType}</td>
+                    <td><span class="badge badge--${getPriorityClass(ticket.priority)}">${ticket.priority}</span></td>
+                    <td><span class="badge badge--${getStatusClass(ticket.status)}">${ticket.status}</span></td>
+                    <td><strong>${ticket.estimatedResolution} mins</strong></td>
+                    <td>${ticket.dateCreated.toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn--sm btn--outline" onclick="viewTicket('${ticket.id}')">
+                            👁️ View
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterTicketData() {
+            const statusFilter = document.getElementById('statusFilter')?.value || '';
+            const categoryFilter = document.getElementById('categoryFilter')?.value || '';
+            const searchFilter = document.getElementById('searchFilter')?.value.toLowerCase() || '';
+            
+            return tickets.filter(ticket => {
+                const matchesStatus = !statusFilter || ticket.status === statusFilter;
+                const matchesCategory = !categoryFilter || ticket.category === categoryFilter;
+                const matchesSearch = !searchFilter || 
+                    ticket.id.toLowerCase().includes(searchFilter) ||
+                    ticket.issueType.toLowerCase().includes(searchFilter) ||
+                    ticket.description.toLowerCase().includes(searchFilter);
+                
+                // If user role, only show their tickets
+                if (currentRole === 'user') {
+                    // In a real app, you'd filter by actual user
+                    return matchesStatus && matchesCategory && matchesSearch;
+                }
+                
+                return matchesStatus && matchesCategory && matchesSearch;
+            });
+        }
+
+        function filterTickets() {
+            renderTicketsTable();
+        }
+
+        function getBadgeClass(category) {
+            const classes = {
+                'Hardware': 'danger',
+                'Software': 'warning', 
+                'Network': 'primary'
+            };
+            return classes[category] || 'primary';
+        }
+
+        function getPriorityClass(priority) {
+            const classes = {
+                'Low': 'success',
+                'Medium': 'warning',
+                'High': 'danger',
+                'Critical': 'danger'
+            };
+            return classes[priority] || 'primary';
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'Open': 'danger',
+                'In-Progress': 'warning',
+                'Resolved': 'success'
+            };
+            return classes[status] || 'primary';
+        }
+
+        function viewTicket(ticketId) {
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+            
+            alert(`Ticket Details:\n\nID: ${ticket.id}\nUser: ${ticket.user}\nDepartment: ${ticket.department}\nCategory: ${ticket.category}\nIssue: ${ticket.issueType}\nDescription: ${ticket.description}\nPriority: ${ticket.priority}\nStatus: ${ticket.status}\nEstimated Resolution: ${ticket.estimatedResolution} minutes\nCreated: ${ticket.dateCreated.toLocaleString()}`);
+        }
+
+        function updateAnalytics() {
+            const totalCount = tickets.length;
+            const resolvedCount = tickets.filter(t => t.status === 'Resolved').length;
+            const resolutionRate = totalCount > 0 ? Math.round((resolvedCount / totalCount) * 100) : 0;
+            
+            const resolvedTickets = tickets.filter(t => t.status === 'Resolved');
+            const avgResponse = resolvedTickets.length > 0
+                ? Math.round(resolvedTickets.reduce((sum, t) => sum + t.estimatedResolution, 0) / resolvedTickets.length)
+                : 0;
+            
+            document.getElementById('totalTicketsAnalytics').textContent = totalCount;
+            document.getElementById('resolutionRate').textContent = resolutionRate + '%';
+            document.getElementById('avgResponseTime').textContent = avgResponse;
+            
+            // Update category chart (simple text representation)
+            const categoryStats = {};
+            tickets.forEach(ticket => {
+                categoryStats[ticket.category] = (categoryStats[ticket.category] || 0) + 1;
+            });
+            
+            const categoryChart = document.getElementById('categoryChart');
+            categoryChart.innerHTML = Object.entries(categoryStats).map(([category, count]) => 
+                `<div style="margin-bottom: 10px;">
+                    <strong>${category}:</strong> ${count} tickets (${Math.round((count/totalCount)*100)}%)
+                    <div style="background: #e5e5e5; height: 20px; border-radius: 10px; overflow: hidden;">
+                        <div style="background: var(--primary-color); height: 100%; width: ${(count/totalCount)*100}%; border-radius: 10px;"></div>
+                    </div>
+                </div>`
+            ).join('');
+            
+            // Update common issues
+            const issueStats = {};
+            tickets.forEach(ticket => {
+                issueStats[ticket.issueType] = (issueStats[ticket.issueType] || 0) + 1;
+            });
+            
+            const commonIssues = Object.entries(issueStats)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5);
+            
+            document.getElementById('commonIssues').innerHTML = commonIssues.map(([issue, count]) =>
+                `<p><strong>${issue}:</strong> ${count} tickets</p>`
+            ).join('');
+        }
+
+        // Asset Management Functions
+        function renderAssetCategories() {
+            const container = document.getElementById('assetCategories');
+            container.innerHTML = Object.entries(assetCategories).map(([key, category]) => {
+                const assetCount = assets[key] ? assets[key].length : 0;
+                return `
+                    <div class="asset-category-card ${selectedAssetCategory === key ? 'active' : ''}" 
+                         onclick="selectAssetCategory('${key}')">
+                        <div class="asset-category-icon">${category.icon}</div>
+                        <div class="asset-category-name">${category.name}</div>
+                        <div class="asset-category-count">${assetCount} items</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectAssetCategory(categoryKey) {
+            selectedAssetCategory = categoryKey;
+            renderAssetCategories();
+            renderAssetsTable(categoryKey);
+        }
+
+        function renderAssetsTable(categoryKey = null) {
+            const header = document.getElementById('assetTableHeader');
+            const tbody = document.getElementById('assetTableBody');
+            const title = document.getElementById('selectedCategoryTitle');
+            
+            if (!categoryKey) {
+                header.innerHTML = '<tr><th>Select a category to view assets</th></tr>';
+                tbody.innerHTML = '';
+                title.textContent = 'All Assets';
+                return;
+            }
+            
+            const category = assetCategories[categoryKey];
+            const categoryAssets = assets[categoryKey] || [];
+            
+            title.textContent = category.name;
+            
+            // Generate table headers
+            header.innerHTML = `
+                <tr>
+                    ${category.fields.map(field => `<th>${field.label}</th>`).join('')}
+                    <th>Actions</th>
+                </tr>
+            `;
+            
+            // Generate table rows
+            tbody.innerHTML = categoryAssets.map((asset, index) => `
+                <tr>
+                    ${category.fields.map(field => `<td>${asset[field.name] || '-'}</td>`).join('')}
+                    <td>
+                        <button class="btn btn--sm btn--outline" onclick="editAsset('${categoryKey}', ${index})">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn--sm btn--danger" onclick="deleteAsset('${categoryKey}', ${index})">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showAddAssetModal() {
+            if (!selectedAssetCategory) {
+                showNotification('Please select an asset category first', 'warning');
+                return;
+            }
+            
+            const category = assetCategories[selectedAssetCategory];
+            document.getElementById('assetModalTitle').textContent = `Add New ${category.name}`;
+            
+            const formFields = document.getElementById('assetFormFields');
+            formFields.innerHTML = category.fields.map(field => {
+                if (field.type === 'select') {
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">${field.label} ${field.required ? '*' : ''}</label>
+                            <select name="${field.name}" class="form-control" ${field.required ? 'required' : ''}>
+                                <option value="">Select ${field.label}</option>
+                                ${field.options.map(option => `<option value="${option}">${option}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">${field.label} ${field.required ? '*' : ''}</label>
+                            <input type="${field.type}" name="${field.name}" class="form-control" ${field.required ? 'required' : ''}>
+                        </div>
+                    `;
+                }
+            }).join('');
+            
+            document.getElementById('assetModal').classList.add('show');
+        }
+
+        function closeAssetModal() {
+            document.getElementById('assetModal').classList.remove('show');
+            document.getElementById('assetForm').reset();
+        }
+
+        function saveAsset(event) {
+            event.preventDefault();
+            
+            if (!selectedAssetCategory) return;
+            
+            const formData = new FormData(event.target);
+            const assetData = Object.fromEntries(formData.entries());
+            
+            if (!assets[selectedAssetCategory]) {
+                assets[selectedAssetCategory] = [];
+            }
+            
+            assets[selectedAssetCategory].push(assetData);
+            saveAssets();
+            updateStorageInfo();
+            
+            showNotification('Asset added successfully!', 'success');
+            closeAssetModal();
+            renderAssetCategories();
+            renderAssetsTable(selectedAssetCategory);
+        }
+
+        function editAsset(categoryKey, index) {
+            // For demo purposes, just show alert
+            alert('Edit functionality would open modal with pre-filled data');
+        }
+
+        function deleteAsset(categoryKey, index) {
+            if (confirm('Are you sure you want to delete this asset?')) {
+                assets[categoryKey].splice(index, 1);
+                saveAssets();
+                updateStorageInfo();
+                showNotification('Asset deleted successfully!', 'success');
+                renderAssetCategories();
+                renderAssetsTable(categoryKey);
+            }
+        }
+
+        // Admin Functions
+        function renderAdminTicketsTable() {
+            const tbody = document.getElementById('adminTicketsTable');
+            tbody.innerHTML = tickets.map(ticket => `
+                <tr>
+                    <td><input type="checkbox" class="ticket-checkbox" value="${ticket.id}"></td>
+                    <td><strong>${ticket.id}</strong></td>
+                    <td>${ticket.user}</td>
+                    <td>${ticket.department}</td>
+                    <td><span class="badge badge--${getBadgeClass(ticket.category)}">${ticket.category}</span></td>
+                    <td>${ticket.issueType}</td>
+                    <td><span class="badge badge--${getPriorityClass(ticket.priority)}">${ticket.priority}</span></td>
+                    <td><span class="badge badge--${getStatusClass(ticket.status)}">${ticket.status}</span></td>
+                    <td>${ticket.dateCreated.toLocaleDateString()}</td>
+                    <td>
+                        <select onchange="updateTicketStatus('${ticket.id}', this.value)" class="form-control" style="width: 120px;">
+                            <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                            <option value="In-Progress" ${ticket.status === 'In-Progress' ? 'selected' : ''}>In-Progress</option>
+                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTicketStatus(ticketId, newStatus) {
+            const ticket = tickets.find(t => t.id === ticketId);
+            if (ticket) {
+                ticket.status = newStatus;
+                saveData();
+                showNotification(`Ticket ${ticketId} status updated to ${newStatus}`, 'success');
+                updateDashboard();
+                renderTicketsTable();
+                renderAdminTicketsTable();
+            }
+        }
+
+        function toggleAllTickets(checkbox) {
+            const checkboxes = document.querySelectorAll('.ticket-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+        }
+
+        function bulkUpdateStatus(status) {
+            const checkedBoxes = document.querySelectorAll('.ticket-checkbox:checked');
+            const ticketIds = Array.from(checkedBoxes).map(cb => cb.value);
+            
+            if (ticketIds.length === 0) {
+                showNotification('Please select tickets to update', 'warning');
+                return;
+            }
+            
+            ticketIds.forEach(ticketId => {
+                const ticket = tickets.find(t => t.id === ticketId);
+                if (ticket) {
+                    ticket.status = status;
+                }
+            });
+            
+            saveData();
+            showNotification(`${ticketIds.length} tickets updated to ${status}`, 'success');
+            updateDashboard();
+            renderTicketsTable();
+            renderAdminTicketsTable();
+        }
+
+        function updateAdminStats() {
+            const pendingCount = tickets.filter(t => t.status !== 'Resolved').length;
+            const totalAssetsCount = Object.values(assets).reduce((sum, categoryAssets) => sum + categoryAssets.length, 0);
+            
+            document.getElementById('pendingTickets').textContent = pendingCount;
+            document.getElementById('totalAssets').textContent = totalAssetsCount;
+            document.getElementById('expiringAssets').textContent = 0; // Placeholder for expiring assets
+        }
+
+        // Export Functions
+        function exportData() {
+            const dataToExport = {
+                tickets: tickets,
+                assets: assets,
+                exportDate: new Date().toISOString(),
+                totalRecords: tickets.length + Object.values(assets).reduce((sum, arr) => sum + arr.length, 0)
+            };
+            
+            const csvContent = convertToCSV(tickets);
+            downloadFile(csvContent, 'helpdesk-tickets-export.csv', 'text/csv');
+            
+            showNotification('Data exported successfully!', 'success');
+        }
+
+        function exportAllTickets() {
+            const csvContent = convertToCSV(tickets);
+            downloadFile(csvContent, 'all-tickets-export.csv', 'text/csv');
+            showNotification('All tickets exported successfully!', 'success');
+        }
+
+        function convertToCSV(data) {
+            if (!data || data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]).join(',');
+            const rows = data.map(item => 
+                Object.values(item).map(value => 
+                    typeof value === 'string' ? `"${value}"` : value
+                ).join(',')
+            );
+            
+            return [headers, ...rows].join('\n');
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Real-time Updates
+        function startRealTimeUpdates() {
+            updateInterval = setInterval(() => {
+                updateStorageInfo();
+                
+                // Check for expiring software licenses (placeholder)
+                checkExpiringAssets();
+                
+                // Simulate occasional status updates
+                if (Math.random() < 0.1) { // 10% chance every 30 seconds
+                    simulateStatusUpdate();
+                }
+            }, 30000); // Update every 30 seconds
+        }
+
+        function checkExpiringAssets() {
+            // Placeholder for checking expiring software licenses
+            // In a real application, this would check warranty and license expiry dates
+            const twoMonthsFromNow = new Date();
+            twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
+            
+            // Show notification if any assets are expiring soon
+            if (currentRole === 'admin' && Math.random() < 0.05) { // 5% chance for demo
+                showNotification('Some software licenses are expiring within 60 days. Check asset management.', 'warning');
+            }
+        }
+
+        function simulateStatusUpdate() {
+            // Simulate occasional automatic ticket status updates
+            const openTickets = tickets.filter(t => t.status === 'Open');
+            if (openTickets.length > 0 && Math.random() < 0.3) {
+                const randomTicket = openTickets[Math.floor(Math.random() * openTickets.length)];
+                randomTicket.status = 'In-Progress';
+                saveData();
+                
+                if (currentTab === 'dashboard' || currentTab === 'tickets' || currentTab === 'admin') {
+                    updateDashboard();
+                    renderTicketsTable();
+                    if (currentRole === 'admin') {
+                        renderAdminTicketsTable();
+                    }
+                }
+                
+                showNotification(`Ticket ${randomTicket.id} status updated to In-Progress`, 'info');
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+
+        // Service Worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'helpdesk-v1';
+                    const urlsToCache = ['/'];
+                    
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
